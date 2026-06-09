@@ -2,6 +2,7 @@
 """First-time auth wizard for telint."""
 
 import asyncio
+import os
 import sys
 
 from rich.console import Console
@@ -68,7 +69,10 @@ def main() -> None:
         "RATE_LIMIT_DELAY=1.0\n"
     )
 
-    with open(".env", "w", encoding="utf-8") as f:
+    def _open_private(path, flags):
+        return os.open(path, flags, 0o600)
+
+    with open(".env", "w", encoding="utf-8", opener=_open_private) as f:
         f.write(env_content)
 
     console.print()
@@ -79,12 +83,15 @@ def main() -> None:
     async def _test_auth() -> None:
         from telethon import TelegramClient
         client = TelegramClient(session_name, api_id, api_hash)
-        await client.start(phone=phone)
+        await asyncio.wait_for(client.start(phone=phone), timeout=120)
         await client.disconnect()
 
     try:
         asyncio.run(_test_auth())
     except Exception as exc:
+        # Clean up .env on failure so next run starts fresh
+        if os.path.exists(".env"):
+            os.remove(".env")
         console.print(f"[bold red]Authentication failed:[/bold red] {exc}")
         sys.exit(1)
 
