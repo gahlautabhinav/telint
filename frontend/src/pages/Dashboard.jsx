@@ -45,7 +45,7 @@ function StatsStrip({ targets }) {
       {stats.map((s, i) => {
         const Icon = s.icon
         return (
-          <div key={i} style={stripStyles.card}>
+          <div key={s.label} style={stripStyles.card}>
             <div style={stripStyles.top}>
               <span style={stripStyles.label}>{s.label}</span>
               <span style={{ color: s.accent ? 'var(--color-coral)' : 'var(--color-muted)' }}>
@@ -380,7 +380,7 @@ function AddTargetPanel({ onAdd, onClose }) {
       <div style={panelStyles.inner}>
         <div style={panelStyles.titleRow}>
           <span style={panelStyles.title}>Add Target</span>
-          <button style={panelStyles.closeBtn} onClick={onClose}>
+          <button style={panelStyles.closeBtn} onClick={onClose} aria-label="Close">
             <X size={16} strokeWidth={2} />
           </button>
         </div>
@@ -540,7 +540,7 @@ export default function Dashboard() {
 
   const handleAddTarget = async (body) => {
     const added = await api.addTarget(body)
-    setTargets(prev => [...prev, added])
+    if (added && added.id) setTargets(prev => [...prev, added])
   }
 
   const handleScrape = async (handle) => {

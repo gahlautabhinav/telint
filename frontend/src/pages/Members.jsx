@@ -246,6 +246,7 @@ export default function Members() {
         href={api.exportData(handle, 'csv')}
         download
         className="btn-outline"
+        aria-label="Export as CSV"
       >
         <Download size={13} strokeWidth={2} />
         Export CSV
@@ -254,6 +255,7 @@ export default function Members() {
         href={api.exportData(handle, 'json')}
         download
         className="btn-outline"
+        aria-label="Export as JSON"
       >
         <Download size={13} strokeWidth={2} />
         Export JSON
@@ -330,6 +332,7 @@ export default function Members() {
             value={filter}
             onChange={e => { setFilter(e.target.value); setPage(0) }}
             style={pageStyles.searchInput}
+            aria-label="Filter members"
           />
         </div>
         <span style={pageStyles.countLabel}>
@@ -346,6 +349,9 @@ export default function Members() {
                 <th
                   key={col.key}
                   onClick={() => handleSort(col.key)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={e => e.key === 'Enter' && handleSort(col.key)}
                   style={{
                     ...pageStyles.th,
                     textAlign: col.align || 'left',
@@ -379,7 +385,7 @@ export default function Members() {
               </tr>
             ) : (
               pageRows.map((m, i) => (
-                <tr key={m.user_id || i} style={pageStyles.tr}>
+                <tr key={`${m.target_id}-${m.user_id}-${i}`} style={pageStyles.tr}>
                   <td style={{ ...pageStyles.td, textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', color: 'var(--color-slate)' }}>
                     {m.user_id || '—'}
                   </td>
