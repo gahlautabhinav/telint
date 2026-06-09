@@ -286,7 +286,10 @@ def targets_cmd():
         from telint import storage
 
         await storage.init_db()
-        return await storage.list_targets()
+        targets = await storage.list_targets()
+        for t in targets:
+            t["member_count"] = await storage.get_member_count(t["id"])
+        return targets
 
     targets = _run(_targets())
 
