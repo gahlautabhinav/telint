@@ -2,6 +2,8 @@
 Async SQLite data layer for telint using aiosqlite.
 """
 
+import sqlite3
+
 import aiosqlite
 from datetime import datetime
 
@@ -62,21 +64,15 @@ async def add_target(handle: str, type_: str, display_name: str = None) -> int:
     """Insert target, return its id. Raise ValueError if handle already exists."""
     async with aiosqlite.connect(settings.db_path) as db:
         await db.execute("PRAGMA foreign_keys=ON")
-        db.row_factory = aiosqlite.Row
-
-        # Check for existing handle
-        async with db.execute("SELECT id FROM targets WHERE handle = ?", (handle,)) as cursor:
-            existing = await cursor.fetchone()
-        if existing is not None:
-            raise ValueError(f"Target with handle '{handle}' already exists.")
-
         added_at = datetime.utcnow().isoformat()
-        async with db.execute(
-            "INSERT INTO targets (handle, type, display_name, added_at) VALUES (?, ?, ?, ?)",
-            (handle, type_, display_name, added_at),
-        ) as cursor:
-            row_id = cursor.lastrowid
-
+        try:
+            async with db.execute(
+                "INSERT INTO targets (handle, type, display_name, added_at) VALUES (?, ?, ?, ?)",
+                (handle, type_, display_name, added_at),
+            ) as cursor:
+                row_id = cursor.lastrowid
+        except (aiosqlite.IntegrityError, sqlite3.IntegrityError):
+            raise ValueError(f"Target with handle '{handle}' already exists.")
         await db.commit()
         return row_id
 
@@ -117,24 +113,16 @@ async def upsert_member(
         now = datetime.utcnow().isoformat()
         is_bot_int = 1 if is_bot else 0
 
-        # INSERT OR IGNORE preserves first_seen on conflict
-        await db.execute(
+        # INSERT OR IGNORE preserves first_seen on conflict; rowcount=1 means new row
+        async with db.execute(
             """
             INSERT OR IGNORE INTO members
                 (target_id, user_id, username, first_name, last_name, phone, is_bot, scraped_via, first_seen, last_seen)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (target_id, user_id, username, first_name, last_name, phone, is_bot_int, scraped_via, now, now),
-        )
-
-        # Check if the INSERT actually created a new row
-        async with db.execute(
-            "SELECT first_seen FROM members WHERE target_id = ? AND user_id = ?",
-            (target_id, user_id),
         ) as cursor:
-            row = await cursor.fetchone()
-
-        is_new = row is not None and row["first_seen"] == now
+            is_new = cursor.rowcount == 1
 
         # UPDATE mutable fields (but leave first_seen untouched)
         await db.execute(
