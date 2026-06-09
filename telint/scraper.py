@@ -62,7 +62,11 @@ async def scrape_group_members(handle: str) -> tuple[int, int]:
     batch_counter = 0
 
     # get_participants with aggressive=True fetches all members even in large groups
-    participants = await client.get_participants(entity, aggressive=True)
+    try:
+        participants = await client.get_participants(entity, aggressive=True)
+    except FloodWaitError as e:
+        await asyncio.sleep(e.seconds + 1)
+        participants = await client.get_participants(entity, aggressive=True)
 
     for user in participants:
         # Skip deleted accounts
