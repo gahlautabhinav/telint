@@ -207,3 +207,15 @@ async def delete_target(handle: str) -> None:
         await db.execute("PRAGMA foreign_keys=ON")
         await db.execute("DELETE FROM targets WHERE handle = ?", (handle,))
         await db.commit()
+
+
+async def get_scrape_runs(target_id: int) -> list[dict]:
+    """Return all scrape runs for a target ordered by most recent first."""
+    async with aiosqlite.connect(settings.db_path) as db:
+        db.row_factory = aiosqlite.Row
+        async with db.execute(
+            "SELECT * FROM scrape_runs WHERE target_id = ? ORDER BY run_at DESC",
+            (target_id,),
+        ) as cursor:
+            rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
