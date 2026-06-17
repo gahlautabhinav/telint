@@ -6,3 +6,6 @@ __pycache__/
 *.pyc
 .venv/
 exports/
+design-file/
+bug-screenshots/
+claude-resume.txt
