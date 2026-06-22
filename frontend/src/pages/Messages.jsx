@@ -371,7 +371,7 @@ export default function Messages() {
               pageRows.map((m, i) => (
                 <tr key={`${m.message_id}-${i}`} style={pageStyles.tr}>
                   <td style={{ ...pageStyles.td, textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', color: 'var(--color-slate)' }}>
-                    {m.message_id || '—'}
+                    {m.message_id ?? '—'}
                   </td>
                   <td style={{ ...pageStyles.td, fontFamily: "'JetBrains Mono', monospace", fontSize: '12px' }}>
                     {m.sender_username ? `@${m.sender_username}` : <span style={{ color: 'var(--color-muted)' }}>—</span>}
@@ -383,7 +383,7 @@ export default function Messages() {
                     {m.sender_last_name || <span style={{ color: 'var(--color-muted)' }}>—</span>}
                   </td>
                   <td style={{ ...pageStyles.td, textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', color: 'var(--color-slate)' }}>
-                    {m.sender_user_id || '—'}
+                    {m.sender_user_id ?? '—'}
                   </td>
                   <td style={pageStyles.td}>
                     <MediaBadge type={m.media_type} />
