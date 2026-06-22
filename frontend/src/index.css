@@ -9,24 +9,24 @@
 }
 
 :root {
-  --color-primary: #17171c;
+  --color-primary: #ececf1;
   --color-deep-green: #003c33;
-  --color-canvas: #ffffff;
-  --color-soft-stone: #eeece7;
-  --color-pale-green: #edfce9;
-  --color-hairline: #d9d9dd;
-  --color-card-border: #f2f2f2;
-  --color-border-light: #e5e7eb;
-  --color-muted: #93939f;
-  --color-slate: #75758a;
-  --color-body-muted: #616161;
-  --color-ink: #212121;
+  --color-canvas: #101014;
+  --color-soft-stone: #1a1a22;
+  --color-pale-green: #0c2018;
+  --color-hairline: #2c2c38;
+  --color-card-border: #222230;
+  --color-border-light: #2c2c38;
+  --color-muted: #6b6b7e;
+  --color-slate: #8080a0;
+  --color-body-muted: #9898a8;
+  --color-ink: #ececf1;
   --color-on-dark: #ffffff;
   --color-coral: #ff7759;
-  --color-coral-soft: #ffad9b;
-  --color-action-blue: #1863dc;
-  --color-error: #b30000;
-  --color-pale-blue: #f1f5ff;
+  --color-coral-soft: #7a3520;
+  --color-action-blue: #5b9bff;
+  --color-error: #ff6b6b;
+  --color-pale-blue: #0d1830;
 
   --radius-xs: 4px;
   --radius-sm: 8px;
@@ -118,8 +118,8 @@ input, select, textarea {
 
 /* Button classes */
 .btn-primary {
-  background: var(--color-primary);
-  color: var(--color-on-dark);
+  background: var(--color-ink);
+  color: #101014;
   font-family: 'DM Sans', system-ui;
   font-size: 14px;
   font-weight: 500;
@@ -157,7 +157,7 @@ input, select, textarea {
   white-space: nowrap;
 }
 .btn-outline:hover {
-  border-color: var(--color-ink);
+  border-color: var(--color-slate);
   background: var(--color-soft-stone);
 }
 .btn-outline:disabled {
@@ -223,14 +223,14 @@ input, select, textarea {
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  border: 2px solid rgba(16, 16, 20, 0.3);
+  border-top-color: #101014;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
 .spinner-dark {
-  border-color: rgba(23, 23, 28, 0.2);
-  border-top-color: var(--color-primary);
+  border-color: rgba(236, 236, 241, 0.2);
+  border-top-color: var(--color-ink);
 }
 
 /* Flash animation */
