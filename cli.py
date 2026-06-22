@@ -256,7 +256,7 @@ def export_cmd(handle: str, fmt: str, output_path: str):
 
 @cli.command("serve")
 @click.option("--host", default="127.0.0.1", show_default=True, help="Bind host.")
-@click.option("--port", default=8001, show_default=True, help="Bind port.")
+@click.option("--port", default=8002, show_default=True, help="Bind port.")
 def serve_cmd(host: str, port: int):
     """Start the web dashboard (uvicorn)."""
     console.print(f"[cyan]Starting dashboard on http://{host}:{port} ...[/cyan]")
