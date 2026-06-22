@@ -224,7 +224,7 @@ export default function Members() {
         <span style={{
           fontFamily: "'DM Sans', system-ui",
           fontSize: '13px',
-          color: 'var(--color-deep-green)',
+          color: 'var(--color-success-fg)',
           fontWeight: 500,
           background: 'var(--color-pale-green)',
           padding: '5px 12px',

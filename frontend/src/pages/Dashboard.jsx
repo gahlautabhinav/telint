@@ -362,11 +362,11 @@ const cardStyles = {
   },
   flashSuccess: {
     background: 'var(--color-pale-green)',
-    color: 'var(--color-deep-green)',
-    border: '1px solid rgba(0, 60, 51, 0.15)',
+    color: 'var(--color-success-fg)',
+    border: '1px solid rgba(74, 222, 154, 0.15)',
   },
   flashError: {
-    background: '#fff0f0',
+    background: 'rgba(255, 112, 112, 0.08)',
     color: 'var(--color-error)',
     border: '1px solid rgba(179, 0, 0, 0.15)',
   },
