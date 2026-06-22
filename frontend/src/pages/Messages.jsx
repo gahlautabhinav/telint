@@ -113,7 +113,7 @@ export default function Messages() {
     try {
       const result = await api.scrapeMessages(handle, scrapeLimit)
       setScrapeResult(result)
-      loadMessages()
+      await loadMessages()
       setTimeout(() => setScrapeResult(null), 4000)
     } catch {
       setScrapeResult({ error: true })

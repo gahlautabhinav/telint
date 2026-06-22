@@ -473,7 +473,7 @@ async def scrape_messages(handle: str, limit: int = None) -> tuple[int, int]:
                     last_name=sender_last_name,
                     phone=sender_phone,
                     is_bot=sender_is_bot,
-                    scraped_via='group_members',
+                    scraped_via='messages',
                 )
                 if is_new_sender and sender_user_id not in seen_sender_ids:
                     new_senders += 1
