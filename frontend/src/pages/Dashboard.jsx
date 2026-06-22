@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Users, Activity, Plus, X, ChevronRight, RefreshCw } from 'lucide-react'
+import { LayoutDashboard, Users, Activity, Plus, X, ChevronRight, RefreshCw, MessageSquare } from 'lucide-react'
 import Layout from '../components/Layout'
 import { api } from '../api'
 
@@ -17,6 +17,7 @@ function formatDate(iso) {
 /* ─── Stats strip ─────────────────────────────────────────── */
 function StatsStrip({ targets }) {
   const totalMembers = targets.reduce((acc, t) => acc + (t.member_count || 0), 0)
+  const totalMessages = targets.reduce((acc, t) => acc + (t.message_count || 0), 0)
   const activeMonitors = targets.filter(t => t.monitoring).length
 
   const stats = [
@@ -30,6 +31,12 @@ function StatsStrip({ targets }) {
       label: 'Total Members',
       value: totalMembers.toLocaleString(),
       icon: Users,
+      accent: false,
+    },
+    {
+      label: 'Total Messages',
+      value: totalMessages.toLocaleString(),
+      icon: MessageSquare,
       accent: false,
     },
     {
@@ -63,7 +70,7 @@ function StatsStrip({ targets }) {
 const stripStyles = {
   wrap: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
+    gridTemplateColumns: 'repeat(4, 1fr)',
     gap: '12px',
     marginBottom: '32px',
   },
@@ -167,6 +174,12 @@ function TargetCard({ target, onScrape, onToggleMonitor, index }) {
           </span>
           <span style={cardStyles.memberLabel}> members</span>
         </div>
+        <div>
+          <span style={cardStyles.memberCount}>
+            {(target.message_count || 0).toLocaleString()}
+          </span>
+          <span style={cardStyles.memberLabel}> messages</span>
+        </div>
         <span style={cardStyles.lastScraped}>
           {target.last_scraped ? formatDate(target.last_scraped) : 'Never scraped'}
         </span>
@@ -237,6 +250,14 @@ function TargetCard({ target, onScrape, onToggleMonitor, index }) {
           style={{ fontSize: '13px', marginLeft: 'auto' }}
         >
           Members
+          <ChevronRight size={14} strokeWidth={2} />
+        </button>
+        <button
+          className="btn-secondary"
+          onClick={() => navigate(`/target/${target.handle}/messages`)}
+          style={{ fontSize: '13px' }}
+        >
+          Messages
           <ChevronRight size={14} strokeWidth={2} />
         </button>
       </div>
@@ -593,7 +614,7 @@ export default function Dashboard() {
         <>
           {/* Skeleton stats strip */}
           <div style={{ ...stripStyles.wrap }}>
-            {[0, 1, 2].map(i => (
+            {[0, 1, 2, 3].map(i => (
               <div key={i} className="card" style={{ height: '88px' }}>
                 <div className="skeleton" style={{ height: '13px', width: '60%' }} />
                 <div className="skeleton" style={{ height: '28px', width: '40%', marginTop: '8px' }} />

@@ -73,13 +73,31 @@ function SortIndicator({ active, dir }) {
     : <ChevronDown size={12} strokeWidth={2} style={{ color: 'var(--color-coral)' }} />
 }
 
+/* ─── Admin badge ────────────────────────────────────────── */
+function AdminBadge() {
+  return (
+    <span style={{
+      fontFamily: "'JetBrains Mono', monospace",
+      fontSize: '10px',
+      fontWeight: 500,
+      padding: '3px 8px',
+      borderRadius: 'var(--radius-pill)',
+      background: 'var(--color-coral)',
+      color: '#fff',
+      letterSpacing: '0.08em',
+    }}>
+      ADMIN
+    </span>
+  )
+}
+
 /* ─── Skeleton rows ─────────────────────────────────────── */
 function SkeletonRows() {
   return (
     <>
       {Array.from({ length: 6 }).map((_, i) => (
         <tr key={i} style={{ borderBottom: '1px solid var(--color-hairline)' }}>
-          {Array.from({ length: 9 }).map((__, j) => (
+          {Array.from({ length: 11 }).map((__, j) => (
             <td key={j} style={{ padding: '12px 14px' }}>
               <div
                 className="skeleton"
@@ -195,6 +213,8 @@ export default function Members() {
     { key: 'scraped_via', label: 'VIA' },
     { key: 'first_seen', label: 'FIRST SEEN' },
     { key: 'last_seen', label: 'LAST SEEN' },
+    { key: 'is_admin', label: 'ADMIN' },
+    { key: 'admin_title', label: 'ADMIN TITLE' },
   ]
 
   /* ─── actions ───────────────────────────────────────────── */
@@ -414,6 +434,12 @@ export default function Members() {
                   </td>
                   <td style={{ ...pageStyles.td, fontSize: '12px', color: 'var(--color-slate)', whiteSpace: 'nowrap' }}>
                     {formatDate(m.last_seen)}
+                  </td>
+                  <td style={{ ...pageStyles.td, textAlign: 'center' }}>
+                    {m.is_admin ? <AdminBadge /> : null}
+                  </td>
+                  <td style={{ ...pageStyles.td, fontSize: '12px', color: 'var(--color-slate)' }}>
+                    {m.admin_title || <span style={{ color: 'var(--color-muted)' }}>—</span>}
                   </td>
                 </tr>
               ))
