@@ -195,6 +195,7 @@ async def get_member_count(target_id: int) -> int:
 async def set_member_admin(target_id: int, user_id: int, is_admin: bool, admin_title: str) -> None:
     """Update admin flag and title on an existing member record."""
     async with aiosqlite.connect(settings.db_path) as db:
+        await db.execute("PRAGMA foreign_keys=ON")
         is_admin_int = 1 if is_admin else 0
         await db.execute(
             "UPDATE members SET is_admin = ?, admin_title = ? WHERE target_id = ? AND user_id = ?",
