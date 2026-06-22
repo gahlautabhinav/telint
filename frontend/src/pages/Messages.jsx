@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
   ArrowLeft, Search, ChevronUp, ChevronDown,
-  Check, Target, RefreshCw, Download
+  MessageSquare, RefreshCw
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import { api } from '../api'
@@ -19,35 +19,14 @@ function formatDate(iso) {
 
 const PAGE_SIZE = 50
 
-/* ─── Type badge ──────────────────────────────────────────── */
-function TypeBadge({ type }) {
-  const isGroup = type === 'group'
-  return (
-    <span style={{
-      fontFamily: "'JetBrains Mono', monospace",
-      fontSize: '10px',
-      fontWeight: 500,
-      padding: '3px 8px',
-      borderRadius: 'var(--radius-pill)',
-      letterSpacing: '0.08em',
-      ...(isGroup
-        ? { background: 'var(--color-deep-green)', color: 'var(--color-on-dark)' }
-        : { border: '1px solid var(--color-coral)', color: 'var(--color-coral)', background: 'transparent' }
-      ),
-    }}>
-      {type ? type.toUpperCase() : 'GROUP'}
-    </span>
-  )
-}
-
-/* ─── VIA chip ────────────────────────────────────────────── */
-function ViaChip({ via }) {
-  const config = {
-    group_members: { bg: 'var(--color-deep-green)', color: 'var(--color-on-dark)', label: 'group' },
-    reaction: { bg: 'var(--color-coral-soft)', color: '#7a3520', label: 'reaction' },
-    comment: { bg: 'var(--color-pale-blue)', color: 'var(--color-action-blue)', label: 'comment' },
+/* ─── MediaBadge ──────────────────────────────────────────── */
+function MediaBadge({ type }) {
+  if (!type) return <span style={{ color: 'var(--color-muted)' }}>—</span>
+  const colors = {
+    photo: { bg: 'var(--color-pale-blue)', color: 'var(--color-action-blue)' },
+    document: { bg: 'var(--color-soft-stone)', color: 'var(--color-muted)' },
   }
-  const c = config[via] || { bg: 'var(--color-soft-stone)', color: 'var(--color-muted)', label: via || '—' }
+  const c = colors[type] || { bg: 'var(--color-soft-stone)', color: 'var(--color-muted)' }
   return (
     <span style={{
       fontFamily: "'JetBrains Mono', monospace",
@@ -60,7 +39,7 @@ function ViaChip({ via }) {
       letterSpacing: '0.05em',
       whiteSpace: 'nowrap',
     }}>
-      {c.label}
+      {type}
     </span>
   )
 }
@@ -73,31 +52,13 @@ function SortIndicator({ active, dir }) {
     : <ChevronDown size={12} strokeWidth={2} style={{ color: 'var(--color-coral)' }} />
 }
 
-/* ─── Admin badge ────────────────────────────────────────── */
-function AdminBadge() {
-  return (
-    <span style={{
-      fontFamily: "'JetBrains Mono', monospace",
-      fontSize: '10px',
-      fontWeight: 500,
-      padding: '3px 8px',
-      borderRadius: 'var(--radius-pill)',
-      background: 'var(--color-coral)',
-      color: '#fff',
-      letterSpacing: '0.08em',
-    }}>
-      ADMIN
-    </span>
-  )
-}
-
 /* ─── Skeleton rows ─────────────────────────────────────── */
 function SkeletonRows() {
   return (
     <>
       {Array.from({ length: 6 }).map((_, i) => (
         <tr key={i} style={{ borderBottom: '1px solid var(--color-hairline)' }}>
-          {Array.from({ length: 11 }).map((__, j) => (
+          {Array.from({ length: 9 }).map((__, j) => (
             <td key={j} style={{ padding: '12px 14px' }}>
               <div
                 className="skeleton"
@@ -111,50 +72,48 @@ function SkeletonRows() {
   )
 }
 
-/* ─── Members page ───────────────────────────────────────── */
-export default function Members() {
+/* ─── Messages page ──────────────────────────────────────── */
+export default function Messages() {
   const { handle } = useParams()
-  const [target, setTarget] = useState(null)
-  const [members, setMembers] = useState([])
+  const [messages, setMessages] = useState([])
+  const [totalCount, setTotalCount] = useState(null)
+  const [lastScraped, setLastScraped] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('')
-  const [sortCol, setSortCol] = useState('user_id')
-  const [sortDir, setSortDir] = useState('asc')
+  const [sortCol, setSortCol] = useState('date')
+  const [sortDir, setSortDir] = useState('desc')
   const [page, setPage] = useState(0)
   const [scraping, setScraping] = useState(false)
   const [scrapeResult, setScrapeResult] = useState(null)
+  const [scrapeLimit, setScrapeLimit] = useState(200)
 
-  const loadMembers = useCallback(async () => {
+  const loadMessages = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
-      const data = await api.getMembers(handle)
-      // data can be { target, members } or just array
-      if (Array.isArray(data)) {
-        setMembers(data)
-      } else {
-        setMembers(Array.isArray(data.members) ? data.members : [])
-        if (data.target) setTarget(data.target)
-      }
+      const data = await api.getMessages(handle)
+      setMessages(Array.isArray(data.messages) ? data.messages : [])
+      if (data.count != null) setTotalCount(data.count)
+      if (data.last_scraped) setLastScraped(data.last_scraped)
     } catch {
-      setError('Failed to load members.')
+      setError('Failed to load messages.')
     } finally {
       setLoading(false)
     }
   }, [handle])
 
   useEffect(() => {
-    loadMembers()
-  }, [loadMembers])
+    loadMessages()
+  }, [loadMessages])
 
   const handleScrape = async () => {
     setScraping(true)
     setScrapeResult(null)
     try {
-      const result = await api.scrape({ handle })
+      const result = await api.scrapeMessages(handle, scrapeLimit)
       setScrapeResult(result)
-      loadMembers()
+      await loadMessages()
       setTimeout(() => setScrapeResult(null), 4000)
     } catch {
       setScrapeResult({ error: true })
@@ -167,13 +126,14 @@ export default function Members() {
   /* ─── filter + sort ─────────────────────────────────────── */
   const filtered = useMemo(() => {
     const q = filter.trim().toLowerCase()
-    return members.filter(m =>
+    return messages.filter(m =>
       !q ||
-      (m.username || '').toLowerCase().includes(q) ||
-      (m.first_name || '').toLowerCase().includes(q) ||
-      (m.last_name || '').toLowerCase().includes(q)
+      (m.sender_username || '').toLowerCase().includes(q) ||
+      (m.sender_first_name || '').toLowerCase().includes(q) ||
+      (m.sender_last_name || '').toLowerCase().includes(q) ||
+      (m.text || '').toLowerCase().includes(q)
     )
-  }, [members, filter])
+  }, [messages, filter])
 
   const sorted = useMemo(() => {
     const col = sortCol
@@ -204,17 +164,15 @@ export default function Members() {
 
   /* ─── columns ───────────────────────────────────────────── */
   const columns = [
-    { key: 'user_id', label: 'USER ID', mono: true, align: 'right' },
-    { key: 'username', label: 'USERNAME' },
-    { key: 'first_name', label: 'FIRST NAME' },
-    { key: 'last_name', label: 'LAST NAME' },
-    { key: 'phone', label: 'PHONE', mono: true },
-    { key: 'is_bot', label: 'BOT' },
-    { key: 'scraped_via', label: 'VIA' },
-    { key: 'first_seen', label: 'FIRST SEEN' },
-    { key: 'last_seen', label: 'LAST SEEN' },
-    { key: 'is_admin', label: 'ADMIN' },
-    { key: 'admin_title', label: 'ADMIN TITLE' },
+    { key: 'message_id', label: 'MSG ID', mono: true, align: 'right' },
+    { key: 'sender_username', label: 'SENDER', mono: true },
+    { key: 'sender_first_name', label: 'FIRST NAME' },
+    { key: 'sender_last_name', label: 'LAST NAME' },
+    { key: 'sender_user_id', label: 'USER ID', mono: true, align: 'right' },
+    { key: 'media_type', label: 'MEDIA' },
+    { key: 'reply_to_message_id', label: 'REPLY TO', mono: true, align: 'right' },
+    { key: 'date', label: 'DATE' },
+    { key: 'text', label: 'TEXT' },
   ]
 
   /* ─── actions ───────────────────────────────────────────── */
@@ -231,7 +189,7 @@ export default function Members() {
           borderRadius: 'var(--radius-pill)',
           animation: 'flashGreen 4s ease forwards',
         }}>
-          {scrapeResult.total || 0} members / {scrapeResult.new || 0} new
+          {scrapeResult.messages_saved || 0} saved / {scrapeResult.new_senders || 0} new senders
         </span>
       )}
       {scrapeResult && scrapeResult.error && (
@@ -244,11 +202,32 @@ export default function Members() {
           Scrape failed
         </span>
       )}
+      <input
+        type="number"
+        min={1}
+        max={5000}
+        value={scrapeLimit}
+        onChange={e => setScrapeLimit(Math.max(1, parseInt(e.target.value) || 200))}
+        style={{
+          width: '70px',
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: '12px',
+          padding: '6px 8px',
+          border: '1px solid var(--color-hairline)',
+          borderRadius: 'var(--radius-sm)',
+          outline: 'none',
+          textAlign: 'center',
+        }}
+        aria-label="Message limit"
+      />
+      <span style={{ fontSize: '12px', color: 'var(--color-muted)', fontFamily: "'DM Sans', system-ui" }}>
+        msgs max
+      </span>
       <button
         className="btn-primary"
         onClick={handleScrape}
         disabled={scraping}
-        style={{ minWidth: '120px' }}
+        style={{ minWidth: '140px' }}
       >
         {scraping ? (
           <>
@@ -258,28 +237,10 @@ export default function Members() {
         ) : (
           <>
             <RefreshCw size={14} strokeWidth={2} />
-            Scrape Now
+            Scrape Messages
           </>
         )}
       </button>
-      <a
-        href={api.exportData(handle, 'csv')}
-        download
-        className="btn-outline"
-        aria-label="Export as CSV"
-      >
-        <Download size={13} strokeWidth={2} />
-        Export CSV
-      </a>
-      <a
-        href={api.exportData(handle, 'json')}
-        download
-        className="btn-outline"
-        aria-label="Export as JSON"
-      >
-        <Download size={13} strokeWidth={2} />
-        Export JSON
-      </a>
     </div>
   )
 
@@ -311,30 +272,33 @@ export default function Members() {
               fontWeight: 600,
               letterSpacing: '-0.3px',
             }}>
-              @{handle}
+              @{handle} Messages
             </span>
-            {target && <TypeBadge type={target.type} />}
           </span>
         </span>
       }
       actions={topBarActions}
     >
       {/* Stats */}
-      {target && (
-        <div style={pageStyles.statsRow}>
-          <span style={pageStyles.statItem}>
-            <span style={pageStyles.statValue}>{(target.member_count || members.length).toLocaleString()}</span>
-            <span style={pageStyles.statLabel}>members</span>
+      <div style={pageStyles.statsRow}>
+        <span style={pageStyles.statItem}>
+          <span style={pageStyles.statValue}>
+            {(totalCount ?? messages.length).toLocaleString()}
           </span>
-          <span style={pageStyles.statDivider} />
-          <span style={pageStyles.statItem}>
-            <span style={pageStyles.statLabel}>Last scraped:</span>
-            <span style={{ fontFamily: "'DM Sans', system-ui", fontSize: '13px', color: 'var(--color-ink)' }}>
-              {formatDate(target.last_scraped)}
+          <span style={pageStyles.statLabel}>messages</span>
+        </span>
+        {lastScraped && (
+          <>
+            <span style={pageStyles.statDivider} />
+            <span style={pageStyles.statItem}>
+              <span style={pageStyles.statLabel}>Last scraped:</span>
+              <span style={{ fontFamily: "'DM Sans', system-ui", fontSize: '13px', color: 'var(--color-ink)' }}>
+                {formatDate(lastScraped)}
+              </span>
             </span>
-          </span>
-        </div>
-      )}
+          </>
+        )}
+      </div>
 
       {error && (
         <div style={{ color: 'var(--color-error)', fontFamily: "'DM Sans', system-ui", fontSize: '14px', marginBottom: '16px' }}>
@@ -348,15 +312,15 @@ export default function Members() {
           <Search size={15} strokeWidth={2} style={{ color: 'var(--color-muted)', flexShrink: 0 }} />
           <input
             type="text"
-            placeholder="Filter by username or name…"
+            placeholder="Filter by sender or message text…"
             value={filter}
             onChange={e => { setFilter(e.target.value); setPage(0) }}
             style={pageStyles.searchInput}
-            aria-label="Filter members"
+            aria-label="Filter messages"
           />
         </div>
         <span style={pageStyles.countLabel}>
-          {sorted.length.toLocaleString()} of {members.length.toLocaleString()}
+          {sorted.length.toLocaleString()} of {messages.length.toLocaleString()}
         </span>
       </div>
 
@@ -394,52 +358,44 @@ export default function Members() {
               <tr>
                 <td colSpan={columns.length} style={pageStyles.emptyCell}>
                   <div style={pageStyles.emptyState}>
-                    <Target size={28} strokeWidth={1.5} style={{ color: 'var(--color-muted)' }} />
+                    <MessageSquare size={28} strokeWidth={1.5} style={{ color: 'var(--color-muted)' }} />
                     <span>
-                      {members.length === 0
-                        ? 'No members scraped yet. Run a scrape to collect data.'
-                        : 'No members match your filter.'}
+                      {messages.length === 0
+                        ? 'No messages scraped yet. Use Scrape Messages to collect evidence.'
+                        : 'No messages match your filter.'}
                     </span>
                   </div>
                 </td>
               </tr>
             ) : (
               pageRows.map((m, i) => (
-                <tr key={`${m.target_id}-${m.user_id}-${i}`} style={pageStyles.tr}>
+                <tr key={`${m.message_id}-${i}`} style={pageStyles.tr}>
                   <td style={{ ...pageStyles.td, textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', color: 'var(--color-slate)' }}>
-                    {m.user_id || '—'}
+                    {m.message_id ?? '—'}
                   </td>
                   <td style={{ ...pageStyles.td, fontFamily: "'JetBrains Mono', monospace", fontSize: '12px' }}>
-                    {m.username ? `@${m.username}` : <span style={{ color: 'var(--color-muted)' }}>—</span>}
+                    {m.sender_username ? `@${m.sender_username}` : <span style={{ color: 'var(--color-muted)' }}>—</span>}
                   </td>
                   <td style={pageStyles.td}>
-                    {m.first_name || <span style={{ color: 'var(--color-muted)' }}>—</span>}
+                    {m.sender_first_name || <span style={{ color: 'var(--color-muted)' }}>—</span>}
                   </td>
                   <td style={pageStyles.td}>
-                    {m.last_name || <span style={{ color: 'var(--color-muted)' }}>—</span>}
+                    {m.sender_last_name || <span style={{ color: 'var(--color-muted)' }}>—</span>}
                   </td>
-                  <td style={{ ...pageStyles.td, fontFamily: "'JetBrains Mono', monospace", fontSize: '12px' }}>
-                    {m.phone || <span style={{ color: 'var(--color-muted)' }}>—</span>}
-                  </td>
-                  <td style={{ ...pageStyles.td, textAlign: 'center' }}>
-                    {m.is_bot ? (
-                      <Check size={14} strokeWidth={2.5} style={{ color: 'var(--color-coral)' }} />
-                    ) : null}
+                  <td style={{ ...pageStyles.td, textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', color: 'var(--color-slate)' }}>
+                    {m.sender_user_id ?? '—'}
                   </td>
                   <td style={pageStyles.td}>
-                    {m.scraped_via ? <ViaChip via={m.scraped_via} /> : <span style={{ color: 'var(--color-muted)' }}>—</span>}
+                    <MediaBadge type={m.media_type} />
+                  </td>
+                  <td style={{ ...pageStyles.td, textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', color: 'var(--color-slate)' }}>
+                    {m.reply_to_message_id ?? <span style={{ color: 'var(--color-muted)' }}>—</span>}
                   </td>
                   <td style={{ ...pageStyles.td, fontSize: '12px', color: 'var(--color-slate)', whiteSpace: 'nowrap' }}>
-                    {formatDate(m.first_seen)}
+                    {formatDate(m.date)}
                   </td>
-                  <td style={{ ...pageStyles.td, fontSize: '12px', color: 'var(--color-slate)', whiteSpace: 'nowrap' }}>
-                    {formatDate(m.last_seen)}
-                  </td>
-                  <td style={{ ...pageStyles.td, textAlign: 'center' }}>
-                    {m.is_admin ? <AdminBadge /> : null}
-                  </td>
-                  <td style={{ ...pageStyles.td, fontSize: '12px', color: 'var(--color-slate)' }}>
-                    {m.admin_title || <span style={{ color: 'var(--color-muted)' }}>—</span>}
+                  <td style={{ ...pageStyles.td, maxWidth: '280px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {m.text || <span style={{ color: 'var(--color-muted)' }}>—</span>}
                   </td>
                 </tr>
               ))

@@ -172,6 +172,74 @@ def channel_cmd(handle: str, export_fmt: str):
 
 
 # ---------------------------------------------------------------------------
+# Command: admins
+# ---------------------------------------------------------------------------
+
+@cli.command("admins")
+@click.argument("handle")
+def admins_cmd(handle: str):
+    """Scrape admins of a Telegram group or channel."""
+
+    async def _admins(handle: str):
+        from telint import storage, scraper
+
+        await storage.init_db()
+
+        console.print(f"[cyan]Scraping admins for {handle}...[/cyan]")
+        admins_found, new_members = await scraper.scrape_admins(handle)
+
+        target = await storage.get_target(handle.lstrip("@"))
+        if target is not None:
+            await storage.record_scrape_run(
+                target["id"], admins_found, new_members, "manual"
+            )
+
+        console.print(
+            f"[green]Found {admins_found} admin(s) ({new_members} new to DB)[/green]"
+        )
+
+    _run(_admins(handle))
+
+
+# ---------------------------------------------------------------------------
+# Command: messages
+# ---------------------------------------------------------------------------
+
+@cli.command("messages")
+@click.argument("handle")
+@click.option(
+    "--limit",
+    default=200,
+    show_default=True,
+    help="Maximum number of messages to fetch.",
+)
+def messages_cmd(handle: str, limit: int):
+    """Scrape messages from a Telegram group or channel as evidence."""
+
+    async def _messages(handle: str, limit: int):
+        from telint import storage, scraper
+
+        await storage.init_db()
+
+        console.print(
+            f"[cyan]Scraping up to {limit} messages for {handle}...[/cyan]"
+        )
+        messages_saved, new_senders = await scraper.scrape_messages(handle, limit=limit)
+
+        target = await storage.get_target(handle.lstrip("@"))
+        if target is not None:
+            await storage.record_scrape_run(
+                target["id"], messages_saved, new_senders, "manual"
+            )
+
+        console.print(
+            f"[green]Saved {messages_saved} message(s), {new_senders} new sender(s)[/green]"
+        )
+
+    _run(_messages(handle, limit))
+
+
+# ---------------------------------------------------------------------------
 # Command: monitor
 # ---------------------------------------------------------------------------
 

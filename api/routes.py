@@ -22,8 +22,9 @@ class AddTargetRequest(BaseModel):
 
 class ScrapeRequest(BaseModel):
     handle: str
-    mode: str = "group"  # 'group' | 'reactions' | 'channel'
+    mode: str = "group"  # 'group' | 'reactions' | 'channel' | 'admins' | 'messages'
     posts_limit: int = None  # for reactions mode
+    limit: int = None  # for messages mode
 
 
 class MonitorRequest(BaseModel):
@@ -48,7 +49,8 @@ async def list_targets():
     result = []
     for t in targets:
         count = await storage.get_member_count(t["id"])
-        result.append({**t, "member_count": count})
+        msg_count = await storage.get_message_count(t["id"])
+        result.append({**t, "member_count": count, "message_count": msg_count})
     return result
 
 
@@ -96,6 +98,16 @@ async def get_runs(handle: str):
     return {"handle": handle, "runs": runs}
 
 
+@router.get("/targets/{handle}/messages")
+async def get_messages(handle: str, limit: int = Query(default=None)):
+    """List scraped messages for a target."""
+    target = await storage.get_target(handle)
+    if target is None:
+        raise HTTPException(status_code=404, detail="Target not found")
+    messages = await storage.get_messages(target["id"], limit=limit)
+    return {"handle": handle, "count": len(messages), "messages": messages}
+
+
 # ---------------------------------------------------------------------------
 # Scrape
 # ---------------------------------------------------------------------------
@@ -119,10 +131,16 @@ async def trigger_scrape(body: ScrapeRequest):
         )
     elif body.mode == "channel":
         members_found, new_members = await scraper.scrape_channel_full(handle)
+    elif body.mode == "admins":
+        members_found, new_members = await scraper.scrape_admins(handle)
+    elif body.mode == "messages":
+        messages_saved, new_senders = await scraper.scrape_messages(handle, limit=body.limit)
+        await storage.record_scrape_run(target_id, messages_saved, new_senders, "manual")
+        return {"messages_saved": messages_saved, "new_senders": new_senders}
     else:
         raise HTTPException(
             status_code=400,
-            detail=f"Unknown scrape mode '{body.mode}'. Use 'group', 'reactions', or 'channel'.",
+            detail=f"Unknown scrape mode '{body.mode}'. Use 'group', 'reactions', 'channel', 'admins', or 'messages'.",
         )
 
     await storage.record_scrape_run(target_id, members_found, new_members, "manual")

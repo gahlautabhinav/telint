@@ -9,24 +9,37 @@
 }
 
 :root {
-  --color-primary: #17171c;
+  /* Brand */
+  --color-primary: #d8e8dc;
   --color-deep-green: #003c33;
-  --color-canvas: #ffffff;
-  --color-soft-stone: #eeece7;
-  --color-pale-green: #edfce9;
-  --color-hairline: #d9d9dd;
-  --color-card-border: #f2f2f2;
-  --color-border-light: #e5e7eb;
-  --color-muted: #93939f;
-  --color-slate: #75758a;
-  --color-body-muted: #616161;
-  --color-ink: #212121;
+  --color-dark-navy: #071829;
+
+  /* Canvas & surfaces — dark, green-tinted (Cohere brand darks) */
+  --color-canvas: #0a0f0d;
+  --color-soft-stone: #0f1712;
+  --color-pale-green: #0c2b1c;
+  --color-pale-blue: #0d1828;
+
+  /* Borders */
+  --color-hairline: #1b2c23;
+  --color-card-border: #1b2c23;
+  --color-border-light: #1b2c23;
+
+  /* Text */
+  --color-ink: #d8e8dc;
+  --color-muted: #5c7a68;
+  --color-slate: #7a9688;
+  --color-body-muted: #8aaa96;
   --color-on-dark: #ffffff;
+
+  /* Accents */
   --color-coral: #ff7759;
-  --color-coral-soft: #ffad9b;
-  --color-action-blue: #1863dc;
-  --color-error: #b30000;
-  --color-pale-blue: #f1f5ff;
+  --color-coral-soft: #5c2010;
+  --color-action-blue: #5a99ff;
+  --color-error: #ff7070;
+
+  /* Success state (readable on dark bg) */
+  --color-success-fg: #4ade9a;
 
   --radius-xs: 4px;
   --radius-sm: 8px;
@@ -118,8 +131,8 @@ input, select, textarea {
 
 /* Button classes */
 .btn-primary {
-  background: var(--color-primary);
-  color: var(--color-on-dark);
+  background: var(--color-ink);
+  color: #0a0f0d;
   font-family: 'DM Sans', system-ui;
   font-size: 14px;
   font-weight: 500;
@@ -157,7 +170,7 @@ input, select, textarea {
   white-space: nowrap;
 }
 .btn-outline:hover {
-  border-color: var(--color-ink);
+  border-color: var(--color-slate);
   background: var(--color-soft-stone);
 }
 .btn-outline:disabled {
@@ -223,14 +236,14 @@ input, select, textarea {
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  border: 2px solid rgba(10, 15, 13, 0.35);
+  border-top-color: #0a0f0d;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
 .spinner-dark {
-  border-color: rgba(23, 23, 28, 0.2);
-  border-top-color: var(--color-primary);
+  border-color: rgba(216, 232, 220, 0.2);
+  border-top-color: var(--color-ink);
 }
 
 /* Flash animation */
