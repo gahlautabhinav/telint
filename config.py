@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     db_path: str = "telint.db"
     monitor_interval_hours: int = 6
     reaction_posts_limit: int = 100
+    message_scrape_limit: int = 200
     rate_limit_delay: float = 1.0
 
     class Config:
