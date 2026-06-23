@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import {
   ArrowLeft, Search, ChevronUp, ChevronDown,
-  MessageSquare, RefreshCw
+  MessageSquare, RefreshCw, X
 } from 'lucide-react'
 import Layout from '../components/Layout'
 import { api } from '../api'
@@ -25,6 +25,7 @@ function MediaBadge({ type }) {
   const colors = {
     photo: { bg: 'var(--color-pale-blue)', color: 'var(--color-action-blue)' },
     document: { bg: 'var(--color-soft-stone)', color: 'var(--color-muted)' },
+    webpage: { bg: 'rgba(255,200,100,0.15)', color: '#b87a00' },
   }
   const c = colors[type] || { bg: 'var(--color-soft-stone)', color: 'var(--color-muted)' }
   return (
@@ -41,6 +42,82 @@ function MediaBadge({ type }) {
     }}>
       {type}
     </span>
+  )
+}
+
+/* ─── Message modal ───────────────────────────────────────── */
+function MessageModal({ msg, onClose }) {
+  if (!msg) return null
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(0,0,0,0.65)',
+        zIndex: 1000,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '32px',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: 'var(--color-canvas)',
+          border: '1px solid var(--color-hairline)',
+          borderRadius: 'var(--radius-sm)',
+          padding: '24px',
+          maxWidth: '700px',
+          width: '100%',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <span style={{ fontFamily: "'Space Grotesk', system-ui", fontSize: '16px', fontWeight: 600, color: 'var(--color-ink)' }}>
+            Message #{msg.message_id}
+          </span>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', padding: '4px', display: 'flex', alignItems: 'center' }}>
+            <X size={16} strokeWidth={2} />
+          </button>
+        </div>
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center', paddingBottom: '12px', borderBottom: '1px solid var(--color-hairline)' }}>
+          {msg.sender_username && (
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', color: 'var(--color-action-blue)' }}>
+              @{msg.sender_username}
+            </span>
+          )}
+          {msg.sender_first_name && (
+            <span style={{ fontFamily: "'DM Sans', system-ui", fontSize: '13px', color: 'var(--color-ink)' }}>
+              {msg.sender_first_name}{msg.sender_last_name ? ` ${msg.sender_last_name}` : ''}
+            </span>
+          )}
+          {msg.sender_user_id && (
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--color-muted)' }}>
+              ID: {msg.sender_user_id}
+            </span>
+          )}
+          <span style={{ fontFamily: "'DM Sans', system-ui", fontSize: '12px', color: 'var(--color-muted)', marginLeft: 'auto' }}>
+            {formatDate(msg.date)}
+          </span>
+          {msg.media_type && <MediaBadge type={msg.media_type} />}
+          {msg.reply_to_message_id && (
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: 'var(--color-muted)' }}>
+              ↩ reply to #{msg.reply_to_message_id}
+            </span>
+          )}
+        </div>
+        <div style={{
+          fontFamily: "'DM Sans', system-ui",
+          fontSize: '14px',
+          color: 'var(--color-ink)',
+          lineHeight: 1.75,
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+        }}>
+          {msg.text || <span style={{ color: 'var(--color-muted)', fontStyle: 'italic' }}>No text content</span>}
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -87,6 +164,7 @@ export default function Messages() {
   const [scraping, setScraping] = useState(false)
   const [scrapeResult, setScrapeResult] = useState(null)
   const [scrapeLimit, setScrapeLimit] = useState(200)
+  const [expandedMsg, setExpandedMsg] = useState(null)
 
   const loadMessages = useCallback(async () => {
     setLoading(true)
@@ -369,7 +447,7 @@ export default function Messages() {
               </tr>
             ) : (
               pageRows.map((m, i) => (
-                <tr key={`${m.message_id}-${i}`} style={pageStyles.tr}>
+                <tr key={`${m.message_id}-${i}`} style={{ ...pageStyles.tr, cursor: 'pointer' }} onClick={() => setExpandedMsg(m)}>
                   <td style={{ ...pageStyles.td, textAlign: 'right', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', color: 'var(--color-slate)' }}>
                     {m.message_id ?? '—'}
                   </td>
@@ -403,6 +481,8 @@ export default function Messages() {
           </tbody>
         </table>
       </div>
+
+      <MessageModal msg={expandedMsg} onClose={() => setExpandedMsg(null)} />
 
       {/* Pagination */}
       {totalPages > 1 && (

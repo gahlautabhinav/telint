@@ -124,7 +124,10 @@ async def trigger_scrape(body: ScrapeRequest):
     target_id = target["id"]
 
     if body.mode == "group":
-        members_found, new_members = await scraper.scrape_group_members(handle)
+        if target.get("type") == "channel":
+            members_found, new_members = await scraper.scrape_channel_full(handle)
+        else:
+            members_found, new_members = await scraper.scrape_group_members(handle)
     elif body.mode == "reactions":
         members_found, new_members = await scraper.scrape_channel_reactions(
             handle, posts_limit=body.posts_limit

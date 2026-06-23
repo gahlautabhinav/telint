@@ -346,7 +346,8 @@ const cardStyles = {
     background: 'rgba(255, 119, 89, 0.05)',
   },
   monitorInactive: {
-    borderColor: 'var(--color-hairline)',
+    borderColor: 'rgba(255,255,255,0.18)',
+    background: 'rgba(255,255,255,0.04)',
   },
   actions: {
     display: 'flex',
